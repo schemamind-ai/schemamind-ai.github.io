@@ -1,0 +1,64 @@
+---
+// Marks the state of a piece of work. Use "planned" until there is evidence
+// that work has started or finished.
+
+export type Status = 'planned' | 'consideration' | 'current' | 'available';
+
+interface Props {
+  status: Status;
+}
+
+const labels: Record<Status, string> = {
+  planned: 'Planned',
+  consideration: 'Under consideration',
+  current: 'Current',
+  available: 'Available',
+};
+
+const { status } = Astro.props;
+---
+
+<span class={`badge badge--${status}`}>{labels[status]}</span>
+
+<style>
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    font: 500 0.8125rem/1.3 var(--font-sans);
+    white-space: nowrap;
+  }
+
+  .badge::before {
+    content: '';
+    width: 0.45em;
+    height: 0.45em;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .badge--planned {
+    color: var(--amber);
+    background: var(--amber-soft);
+  }
+
+  .badge--consideration {
+    color: var(--violet);
+    background: var(--violet-soft);
+    border-style: dashed;
+  }
+
+  .badge--consideration::before {
+    background: transparent;
+    border: 1px solid currentColor;
+  }
+
+  .badge--current,
+  .badge--available {
+    color: var(--blue);
+    background: var(--blue-soft);
+  }
+</style>

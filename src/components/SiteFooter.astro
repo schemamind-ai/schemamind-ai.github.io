@@ -1,0 +1,69 @@
+---
+import { site } from '../data/site';
+
+const updated = new Date().toLocaleDateString('en-GB', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'Europe/Istanbul',
+});
+---
+
+<footer class="site-footer">
+  <div class="page-width grid">
+    <div>
+      <p class="name">{site.name}</p>
+      <p class="muted">
+        {site.course}, {site.term}.<br />
+        {site.departments}, {site.faculty}, {site.university}.
+      </p>
+    </div>
+    <div class="meta">
+      <p class="muted">
+        This is a student project website. It is not an official {site.university} page.
+      </p>
+      <p class="muted">
+        <a href={site.repository} rel="noopener">Source code on GitHub</a>
+        <span aria-hidden="true">&ensp;/&ensp;</span>
+        Last updated <time>{updated}</time>
+      </p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    margin-top: var(--space-7);
+    padding-block: var(--space-5);
+    border-top: 1px solid var(--rule);
+    background: var(--navy-900);
+    font-size: 0.9375rem;
+  }
+
+  .grid {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .grid p + p {
+    margin-top: var(--space-1);
+  }
+
+  .name {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: 1.125rem;
+    margin-bottom: var(--space-1);
+  }
+
+  @media (min-width: 48rem) {
+    .grid {
+      grid-template-columns: 1fr 1fr;
+      align-items: end;
+    }
+
+    .meta {
+      text-align: right;
+    }
+  }
+</style>

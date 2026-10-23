@@ -1,0 +1,86 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import DocumentEntry from '../../components/DocumentEntry.astro';
+import { documents } from '../../data/documents';
+
+const terms = [...new Set(documents.map((doc) => doc.term))];
+---
+
+<BaseLayout
+  path="/documents/"
+  title="Reports and documents"
+  description="Project documents of the SchemaMind AI senior project at TED University, available to read online or download as PDF."
+>
+  <div class="page-width page">
+    <header class="page-head">
+      <p class="crumb"><a href="/">Home</a> <span aria-hidden="true">/</span> Documents</p>
+      <h1>Reports and documents</h1>
+      <p class="intro">
+        Documents produced for the SchemaMind AI senior project. Each one can be read in the browser
+        or downloaded as a PDF.
+      </p>
+    </header>
+
+    {
+      terms.map((term) => (
+        <section class="term" aria-labelledby={`term-${term.replace(/\s+/g, '-').toLowerCase()}`}>
+          <h2 id={`term-${term.replace(/\s+/g, '-').toLowerCase()}`}>{term}</h2>
+          <div class="list">
+            {documents
+              .filter((doc) => doc.term === term)
+              .map((doc) => (
+                <DocumentEntry document={doc} headingLevel={3} />
+              ))}
+          </div>
+        </section>
+      ))
+    }
+
+    <p class="later">Further project documents will be published here as they are completed.</p>
+  </div>
+</BaseLayout>
+
+<style>
+  .page {
+    padding-block: var(--space-6) 0;
+  }
+
+  .crumb {
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+  }
+
+  h1 {
+    margin-top: var(--space-2);
+    font-size: var(--step-4);
+    letter-spacing: -0.02em;
+  }
+
+  .intro {
+    margin-top: var(--space-3);
+    max-width: 52ch;
+    color: var(--text-muted);
+    font-size: 1.125rem;
+  }
+
+  .term {
+    margin-top: var(--space-6);
+  }
+
+  .term h2 {
+    padding-bottom: var(--space-1);
+    margin-bottom: var(--space-3);
+    border-bottom: 1px solid var(--rule);
+    font-size: var(--step-1);
+  }
+
+  .list {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .later {
+    margin-top: var(--space-5);
+    color: var(--text-muted);
+  }
+</style>

@@ -1,0 +1,162 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { site } from '../../data/site';
+import { students, supervisor, jury } from '../../data/people';
+import { documents } from '../../data/documents';
+import { proposalDescription } from '../../data/proposal';
+
+const proposal = documents.find((doc) => doc.id === 'project-proposal')!;
+const fileName = proposal.file.split('/').pop();
+---
+
+<BaseLayout
+  path="/documents/proposal/"
+  title="Project proposal"
+  description="Public copy of the SchemaMind AI senior project proposal: team, supervision, and the description of the proposed research."
+>
+  <div class="page-width page">
+    <header class="page-head">
+      <p class="crumb">
+        <a href="/">Home</a> <span aria-hidden="true">/</span>
+        <a href="/documents/">Documents</a> <span aria-hidden="true">/</span> Project proposal
+      </p>
+      <h1>Project proposal</h1>
+      <p class="intro">{proposal.note}</p>
+      <div class="actions">
+        <a class="button button--primary" href={proposal.file} target="_blank" rel="noopener">
+          View PDF<span class="visually-hidden"> (opens in a new tab)</span>
+        </a>
+        <a class="button" href={proposal.file} download={fileName}>Download PDF</a>
+      </div>
+    </header>
+
+    <article class="sheet" aria-label="Proposal text">
+      <header class="sheet-head">
+        <p class="uni">{site.university.toUpperCase()}</p>
+        <p>{site.faculty}</p>
+        <p>{site.departments}</p>
+        <p class="project-name">Project Name: <strong>{site.name}</strong></p>
+      </header>
+
+      <section>
+        <h2>Team Members</h2>
+        <ul>
+          {students.map((person) => <li>{person.name} – {person.department}</li>)}
+        </ul>
+      </section>
+
+      <section>
+        <h2>Supervisor</h2>
+        <p>{supervisor.name}</p>
+      </section>
+
+      <section>
+        <h2>Jury Members</h2>
+        <ul>
+          {jury.map((person) => <li>{person.name}</li>)}
+        </ul>
+      </section>
+
+      <section>
+        <h2>Link to the official website of the project</h2>
+        <p><a href={site.url}>{site.url}</a></p>
+      </section>
+
+      <section>
+        <h2>Description</h2>
+        {proposalDescription.map((paragraph) => <p>{paragraph}</p>)}
+      </section>
+    </article>
+  </div>
+</BaseLayout>
+
+<style>
+  .page {
+    padding-block: var(--space-6) 0;
+  }
+
+  .crumb {
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+  }
+
+  h1 {
+    margin-top: var(--space-2);
+    font-size: var(--step-4);
+    letter-spacing: -0.02em;
+  }
+
+  .intro {
+    margin-top: var(--space-2);
+    max-width: 60ch;
+    color: var(--text-muted);
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: var(--space-3);
+  }
+
+  /* The proposal is shown as a paper sheet, close to the original document. */
+  .sheet {
+    max-width: 48rem;
+    margin-top: var(--space-5);
+    padding: clamp(1.5rem, 6vw, 4rem);
+    border-radius: 4px;
+    background: #f7f8fb;
+    color: #1b2233;
+    font-family: var(--font-serif);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.06),
+      0 40px 70px -35px rgb(0 0 0 / 0.8);
+  }
+
+  .sheet a {
+    color: #1d4fb8;
+    overflow-wrap: anywhere;
+  }
+
+  .sheet a:focus-visible {
+    outline-color: #1d4fb8;
+  }
+
+  .sheet-head {
+    text-align: center;
+    margin-bottom: var(--space-5);
+  }
+
+  .sheet-head .uni {
+    font-size: 1.5rem;
+    letter-spacing: 0.02em;
+    margin-bottom: var(--space-1);
+  }
+
+  .project-name {
+    margin-top: var(--space-3);
+    font-size: 1.25rem;
+  }
+
+  .sheet section + section {
+    margin-top: var(--space-4);
+  }
+
+  .sheet h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: var(--space-1);
+  }
+
+  .sheet ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .sheet section p + p {
+    margin-top: var(--space-2);
+  }
+</style>

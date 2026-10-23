@@ -1,0 +1,36 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout path="/404.html" title="Page not found" description="The requested page does not exist on the SchemaMind AI website.">
+  <div class="page-width page">
+    <h1>Page not found</h1>
+    <p>The address may be mistyped, or the page may have moved.</p>
+    <div class="actions">
+      <a class="button button--primary" href="/">Go to the home page</a>
+      <a class="button" href="/documents/">Browse documents</a>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .page {
+    padding-block: var(--space-7) var(--space-5);
+  }
+
+  h1 {
+    font-size: var(--step-4);
+  }
+
+  p {
+    margin-top: var(--space-2);
+    color: var(--text-muted);
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: var(--space-4);
+  }
+</style>

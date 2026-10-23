@@ -1,0 +1,64 @@
+---
+// A home-page section: heading and short introduction in the left column,
+// content on the right. Collapses to one column on narrow screens.
+
+interface Props {
+  id: string;
+  title: string;
+  intro?: string;
+}
+
+const { id, title, intro } = Astro.props;
+---
+
+<section class="section" id={id} aria-labelledby={`${id}-title`}>
+  <div class="page-width layout">
+    <header class="rail">
+      <h2 id={`${id}-title`}>{title}</h2>
+      {intro && <p class="intro">{intro}</p>}
+      <slot name="rail" />
+    </header>
+    <div class="body">
+      <slot />
+    </div>
+  </div>
+</section>
+
+<style>
+  .section {
+    padding-block: var(--space-6);
+    border-top: 1px solid var(--rule);
+  }
+
+  .layout {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  h2 {
+    font-size: var(--step-3);
+  }
+
+  .intro {
+    margin-top: var(--space-2);
+    color: var(--text-muted);
+    max-width: 40ch;
+  }
+
+  @media (min-width: 60rem) {
+    .section {
+      padding-block: var(--space-7);
+    }
+
+    .layout {
+      grid-template-columns: minmax(15rem, 1fr) minmax(0, 2.2fr);
+      gap: var(--space-6);
+    }
+
+    .rail {
+      position: sticky;
+      top: calc(var(--header-height) + var(--space-4));
+      align-self: start;
+    }
+  }
+</style>

@@ -1,0 +1,810 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Section from '../components/Section.astro';
+import SchemaFigure from '../components/SchemaFigure.astro';
+import StatusBadge from '../components/StatusBadge.astro';
+import DocumentEntry from '../components/DocumentEntry.astro';
+import PeopleGroup from '../components/PeopleGroup.astro';
+import { site } from '../data/site';
+import { documents } from '../data/documents';
+import { students, supervisor, jury } from '../data/people';
+
+const proposal = documents.find((doc) => doc.id === 'project-proposal')!;
+
+const researchQuestions = [
+  'How much knowledge of a database’s tables, columns and relationships can a language model acquire through fine-tuning?',
+  'How do different training approaches, including LoRA and QLoRA, compare with each other?',
+  'When a database changes after training, for example when a table or column is renamed, can the model still generate correct SQL queries, and does providing updated schema information help?',
+  'How does a fine-tuned model compare with methods that provide database information directly to the model, and when is fine-tuning useful?',
+];
+
+const steps = [
+  {
+    title: 'Select an open-source language model',
+    text: 'The proposal does not fix a specific model. The choice will be made and justified in a later project report.',
+  },
+  {
+    title: 'Prepare training data',
+    text: 'Build training examples from SQL queries, database schemas, and examples of how tables are related.',
+  },
+  {
+    title: 'Fine-tune the model',
+    text: 'Train with parameter-efficient methods. LoRA trains small adapter matrices instead of all model weights; QLoRA applies the same idea to a quantized model to reduce memory use.',
+  },
+  {
+    title: 'Evaluate and compare',
+    text: 'Test the models on SQL datasets such as BIRD and compare them with methods that provide database information directly to the model.',
+  },
+  {
+    title: 'Change the schema and test again',
+    text: 'Modify the database after training, for example by renaming a table or column, and measure whether the model can still generate correct SQL.',
+  },
+];
+
+const approaches = [
+  {
+    name: 'Schema in the prompt',
+    detail: 'A model without database-specific fine-tuning that receives the database schema together with each question. This is the reference point.',
+    status: 'planned',
+  },
+  {
+    name: 'Fine-tuned with LoRA',
+    detail: 'A model fine-tuned on the database using low-rank adapters.',
+    status: 'planned',
+  },
+  {
+    name: 'Fine-tuned with QLoRA',
+    detail: 'The same idea applied to a quantized model, compared with LoRA.',
+    status: 'planned',
+  },
+  {
+    name: 'Fine-tuned, with updated schema information',
+    detail: 'After a schema change, the fine-tuned model is also given information about what changed.',
+    status: 'planned',
+  },
+  {
+    name: 'Retrieved schema information',
+    detail: 'Only the parts of the schema relevant to a question are retrieved and supplied with it.',
+    status: 'consideration',
+  },
+  {
+    name: 'Fine-tuning combined with schema retrieval',
+    detail: 'A fine-tuned model that also receives retrieved schema information.',
+    status: 'consideration',
+  },
+] as const;
+
+const schemaChanges = [
+  { change: 'Rename a column', before: 'customers.name', after: 'customers.full_name', status: 'planned' },
+  { change: 'Rename a table', before: 'orders', after: 'purchases', status: 'planned' },
+  { change: 'Add a table', before: '', after: 'shipments', status: 'consideration' },
+  {
+    change: 'Change a relationship',
+    before: 'orders.customer_id → customers',
+    after: 'orders.account_id → accounts',
+    status: 'consideration',
+  },
+] as const;
+
+const measures = [
+  {
+    name: 'Execution accuracy',
+    text: 'Whether a generated query returns the same result as a reference query when both are run on the database.',
+  },
+  {
+    name: 'Robustness to schema changes',
+    text: 'How each approach’s results change after the schema is modified.',
+  },
+  {
+    name: 'Resource requirements',
+    text: 'The training time and memory each approach needs.',
+  },
+];
+
+const demoFeatures = [
+  'Ask a question in natural language and see the SQL query a model generates',
+  'Compare the queries produced by different approaches',
+  'Show what happens to the generated SQL after a schema change',
+  'Browse the experimental results',
+];
+---
+
+<BaseLayout path="/">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="page-width hero-grid">
+      <div class="hero-text">
+        <h1 id="hero-title">{site.name}</h1>
+        <p class="tagline">{site.tagline}</p>
+        <p class="lead">
+          A senior research project investigating how much knowledge of an SQL database’s structure a
+          language model can learn through fine-tuning, and what happens to that knowledge when the
+          database changes after training.
+        </p>
+
+        <div class="actions">
+          <a class="button button--primary" href="/documents/proposal/">Read the proposal</a>
+          <a class="button" href={proposal.file} download>
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M10 3v10m0 0 4-4m-4 4-4-4M4 16h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            Download PDF
+          </a>
+        </div>
+
+        <dl class="facts">
+          <div>
+            <dt>University</dt>
+            <dd>{site.university}</dd>
+          </div>
+          <div>
+            <dt>Course</dt>
+            <dd>{site.course}</dd>
+          </div>
+          <div>
+            <dt>Term</dt>
+            <dd>{site.term}</dd>
+          </div>
+          <div>
+            <dt>Phase</dt>
+            <dd><StatusBadge status="current" /> {site.phase}</dd>
+          </div>
+        </dl>
+        <p class="stage-note">
+          The research described on this site is planned work. No experiments have been carried out
+          and no results are available yet.
+        </p>
+      </div>
+
+      <div class="hero-figure">
+        <SchemaFigure />
+      </div>
+    </div>
+  </section>
+
+  <Section id="about" title="About the project" intro="What we are investigating and why it matters.">
+    <div class="prose">
+      <h3>The problem</h3>
+      <p>
+        Text-to-SQL systems let people ask questions about a database in natural language. A
+        language model translates each question into an SQL query. To write a correct query, the
+        model has to know the structure of the database: which tables exist, what their columns are
+        called, and how the tables are related.
+      </p>
+      <p>
+        Normally, language models need information about database tables and columns each time they
+        generate a query. Every request therefore carries a description of the database, which can be
+        long for large schemas and must be kept up to date.
+      </p>
+
+      <h3>Our approach</h3>
+      <p>
+        SchemaMind AI asks how much of this information a model can actually learn during training.
+        We will fine-tune an open-source language model with SQL queries, database schemas, and
+        examples of how tables are related, and compare different training approaches, including
+        LoRA and QLoRA.
+      </p>
+      <p>
+        Databases change over time. A second part of the project tests what happens when a database
+        changes after the model has been trained, and whether providing updated schema information
+        helps.
+      </p>
+
+      <h3>Intended contribution</h3>
+      <p>
+        Our goal is to understand when fine-tuning is useful, what its limitations are, and how
+        models can handle changes in database structures. The project is an academic study built on
+        controlled comparisons, together with an application that demonstrates the results. It is not
+        a general-purpose SQL chatbot.
+      </p>
+    </div>
+  </Section>
+
+  <Section
+    id="research-questions"
+    title="Research questions"
+    intro="Based on the project proposal. They may be refined in later reports."
+  >
+    <ol class="rq-list">
+      {
+        researchQuestions.map((question, index) => (
+          <li>
+            <span class="rq-id">RQ{index + 1}</span>
+            <p>{question}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </Section>
+
+  <Section
+    id="methodology"
+    title="Proposed methodology"
+    intro="What we plan to do. Technical choices will be finalised in later reports."
+  >
+    <h3 class="subhead">Planned workflow</h3>
+    <ol class="steps">
+      {
+        steps.map((step) => (
+          <li>
+            <h4>{step.title}</h4>
+            <p>{step.text}</p>
+          </li>
+        ))
+      }
+    </ol>
+
+    <h3 class="subhead">Approaches to compare</h3>
+    <div class="approaches" role="list">
+      {
+        approaches.map((approach) => (
+          <div class="approach" role="listitem" data-status={approach.status}>
+            <div class="approach-head">
+              <h4>{approach.name}</h4>
+              <StatusBadge status={approach.status} />
+            </div>
+            <p>{approach.detail}</p>
+          </div>
+        ))
+      }
+    </div>
+    <p class="legend muted">
+      <strong>Planned</strong> items are stated in the project proposal.
+      <strong>Under consideration</strong> items are being evaluated by the team and are not part
+      of the project proposal.
+    </p>
+  </Section>
+
+  <Section
+    id="evaluation"
+    title="Planned experiments and evaluation"
+    intro="No experiments have been carried out yet. Results will appear here once they exist."
+  >
+    <h3 class="subhead">Schema changes to test</h3>
+    <p class="section-lead">
+      After a model has been trained, the database is modified and the same questions are asked
+      again. The examples below show the kinds of change involved.
+    </p>
+    <ul class="changes">
+      {
+        schemaChanges.map((item) => (
+          <li>
+            <div class="change-head">
+              <h4>{item.change}</h4>
+              <StatusBadge status={item.status} />
+            </div>
+            <p class="diff">
+              {item.before && (
+                <>
+                  <span class="visually-hidden">Before: </span>
+                  <code class="diff-old">{item.before}</code>
+                </>
+              )}
+              {item.before && <span class="diff-arrow" aria-hidden="true">→</span>}
+              <span class="visually-hidden">{item.before ? 'After: ' : 'Added: '}</span>
+              <code class="diff-new">{item.before ? '' : '+ '}{item.after}</code>
+            </p>
+          </li>
+        ))
+      }
+    </ul>
+
+    <h3 class="subhead">Comparisons</h3>
+    <ul class="plain-list">
+      <li>Fine-tuned models compared with methods that provide database information directly to the model, on SQL datasets such as BIRD.</li>
+      <li>LoRA compared with QLoRA.</li>
+      <li>Results before and after each schema change, with and without updated schema information.</li>
+    </ul>
+
+    <h3 class="subhead">Candidate measures</h3>
+    <dl class="measures">
+      {
+        measures.map((measure) => (
+          <div>
+            <dt>
+              {measure.name} <StatusBadge status="consideration" />
+            </dt>
+            <dd>{measure.text}</dd>
+          </div>
+        ))
+      }
+    </dl>
+
+    <div class="results-empty" id="results">
+      <h3>Results</h3>
+      <p>
+        None yet. Comparison tables, charts and analysis will be added here after the experiments are
+        completed.
+      </p>
+    </div>
+  </Section>
+
+  <Section id="documents" title="Reports and documents" intro="Project documents, available to read online or download as PDF.">
+    <DocumentEntry document={proposal} headingLevel={3} />
+    <p class="more-link">
+      <a href="/documents/">All project documents</a>
+    </p>
+  </Section>
+
+  <Section id="team" title="Team and academic supervision" intro={`${site.departments}, ${site.university}.`}>
+    <div class="people">
+      <PeopleGroup title="Project team" people={students} />
+      <PeopleGroup title="Supervisor" people={[supervisor]} />
+      <PeopleGroup title="Jury" people={jury} />
+    </div>
+  </Section>
+
+  <Section id="demo" title="Planned demonstration" intro="An application to demonstrate the results is planned for a later stage.">
+    <div class="demo">
+      <p class="demo-status"><StatusBadge status="planned" /> Not available yet</p>
+      <blockquote>
+        <p>“We also plan to build an application to demonstrate our results.”</p>
+        <footer class="muted">Project proposal</footer>
+      </blockquote>
+      <h3 class="subhead">Features under consideration</h3>
+      <ul class="plain-list">
+        {demoFeatures.map((feature) => <li>{feature}</li>)}
+      </ul>
+      <p class="muted">
+        Nothing on this website currently runs a language model. A link to the demonstration will be
+        added here when it exists.
+      </p>
+    </div>
+  </Section>
+</BaseLayout>
+
+<style>
+  /* Hero */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    padding-block: var(--space-6) var(--space-7);
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgb(111 168 255 / 0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(111 168 255 / 0.07) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse 70% 80% at 70% 30%, #000 20%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 80% at 70% 30%, #000 20%, transparent 75%);
+    pointer-events: none;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    width: 46rem;
+    height: 46rem;
+    right: -14rem;
+    top: -18rem;
+    background: radial-gradient(circle, rgb(168 139 250 / 0.16), transparent 62%);
+    pointer-events: none;
+  }
+
+  .hero-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: var(--space-5);
+    align-items: center;
+  }
+
+  h1 {
+    font-size: var(--step-4);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1;
+    font-variation-settings: 'opsz' 60;
+  }
+
+  .tagline {
+    margin-top: var(--space-2);
+    font-family: var(--font-serif);
+    font-size: var(--step-2);
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1.25;
+    color: #c9d6f2;
+  }
+
+  .lead {
+    margin-top: var(--space-3);
+    max-width: 38rem;
+    font-size: 1.1875rem;
+    color: var(--text-muted);
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: var(--space-4);
+  }
+
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2) var(--space-3);
+    margin: var(--space-5) 0 0;
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--rule);
+    max-width: 38rem;
+  }
+
+  .facts dt {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+  }
+
+  .facts dd {
+    margin: 0.15rem 0 0;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .stage-note {
+    margin-top: var(--space-3);
+    max-width: 38rem;
+    font-size: 0.9375rem;
+    color: var(--text-muted);
+  }
+
+  @media (min-width: 64rem) {
+    .hero {
+      padding-block: var(--space-7);
+    }
+
+    .hero-grid {
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+      gap: var(--space-6);
+    }
+  }
+
+
+  /* Shared section content */
+  .prose h3,
+  .subhead {
+    font-size: var(--step-1);
+    font-weight: 600;
+  }
+
+  .prose h3:not(:first-child) {
+    margin-top: var(--space-4);
+  }
+
+  .subhead {
+    margin-bottom: var(--space-2);
+  }
+
+  .subhead:not(:first-child) {
+    margin-top: var(--space-5);
+  }
+
+  .section-lead {
+    max-width: var(--measure);
+    color: var(--text-muted);
+    margin-bottom: var(--space-3);
+  }
+
+  .plain-list {
+    margin: 0;
+    padding-left: 1.2rem;
+    max-width: var(--measure);
+  }
+
+  .plain-list li + li {
+    margin-top: 0.5rem;
+  }
+
+  .plain-list li::marker {
+    color: var(--blue);
+  }
+
+  /* Research questions */
+  .rq-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0;
+  }
+
+  .rq-list li {
+    display: grid;
+    grid-template-columns: 3.5rem minmax(0, 1fr);
+    gap: var(--space-2);
+    padding-block: var(--space-3);
+    border-top: 1px solid var(--rule);
+  }
+
+  .rq-list li:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .rq-id {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--blue);
+    padding-top: 0.3rem;
+  }
+
+  .rq-list p {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    line-height: 1.45;
+    max-width: 58ch;
+  }
+
+  /* Workflow steps (a real sequence, so numbered) */
+  .steps {
+    counter-reset: step;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    position: relative;
+  }
+
+  .steps li {
+    counter-increment: step;
+    position: relative;
+    padding: 0 0 var(--space-3) 3rem;
+  }
+
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 2rem;
+    height: 2rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 1px solid var(--blue);
+    color: var(--blue);
+    font: 500 0.875rem var(--font-mono);
+    background: var(--navy-950);
+  }
+
+  .steps li:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: calc(1rem - 0.5px);
+    top: 2.25rem;
+    bottom: 0.25rem;
+    width: 1px;
+    background: var(--rule-strong);
+  }
+
+  .steps h4 {
+    font-family: var(--font-sans);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 2rem;
+  }
+
+  .steps p {
+    color: var(--text-muted);
+    max-width: var(--measure);
+  }
+
+  /* Approaches */
+  .approaches {
+    display: grid;
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .approach {
+    padding: var(--space-2) var(--space-3);
+    background: var(--navy-900);
+  }
+
+  .approach[data-status='consideration'] {
+    background: var(--navy-950);
+  }
+
+  .approach-head {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    gap: 0.6rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .approach h4 {
+    font-family: var(--font-sans);
+    font-size: 1.0625rem;
+    font-weight: 600;
+  }
+
+  .approach p {
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+  }
+
+  @media (min-width: 48rem) {
+    .approaches {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .legend {
+    margin-top: var(--space-2);
+    font-size: 0.875rem;
+    max-width: var(--measure);
+  }
+
+  .legend strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* Schema changes */
+  .changes {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .changes li {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--navy-900);
+  }
+
+  .change-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+  }
+
+  .change-head h4 {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .diff {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.75rem;
+    margin-top: 0.6rem;
+  }
+
+  .diff code {
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    overflow-wrap: anywhere;
+  }
+
+  .diff-old {
+    background: rgb(160 170 195 / 0.12);
+    color: var(--text-muted);
+    text-decoration: line-through;
+    text-decoration-color: rgb(160 170 195 / 0.6);
+  }
+
+  .diff-new {
+    background: var(--amber-soft);
+    color: var(--amber);
+  }
+
+  .diff-arrow {
+    color: var(--text-muted);
+  }
+
+  @media (min-width: 48rem) {
+    .changes {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* Measures */
+  .measures {
+    margin: 0;
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .measures dt {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    font-weight: 600;
+  }
+
+  .measures dd {
+    margin: 0.3rem 0 0;
+    color: var(--text-muted);
+    max-width: var(--measure);
+  }
+
+  .results-empty {
+    margin-top: var(--space-5);
+    padding: var(--space-4) var(--space-3);
+    border: 1px dashed var(--rule-strong);
+    border-radius: var(--radius);
+    text-align: center;
+  }
+
+  .results-empty h3 {
+    font-size: var(--step-1);
+  }
+
+  .results-empty p {
+    margin: var(--space-1) auto 0;
+    max-width: 46ch;
+    color: var(--text-muted);
+  }
+
+  /* Documents */
+  .more-link {
+    margin-top: var(--space-3);
+  }
+
+  /* Team */
+  .people {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  @media (min-width: 48rem) {
+    .people {
+      grid-template-columns: 1.4fr 1fr 1fr;
+    }
+  }
+
+  /* Demo */
+  .demo-status {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: var(--space-3);
+  }
+
+  .demo blockquote {
+    margin: 0 0 var(--space-4);
+    padding-left: var(--space-3);
+    border-left: 2px solid var(--violet);
+  }
+
+  .demo blockquote p {
+    font-family: var(--font-serif);
+    font-size: var(--step-1);
+    font-style: italic;
+    line-height: 1.4;
+  }
+
+  .demo blockquote footer {
+    margin-top: 0.4rem;
+    font-size: 0.875rem;
+  }
+
+  .demo > .muted {
+    margin-top: var(--space-3);
+    max-width: var(--measure);
+    font-size: 0.9375rem;
+  }
+</style>

@@ -1,0 +1,29 @@
+{
+  "name": "schemamind-ai-website",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Website of the SchemaMind AI senior project (TED University).",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "test": "playwright test",
+    "verify": "node scripts/verify-dist.mjs",
+    "assets": "node scripts/build-assets.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/source-serif-4": "5.3.1",
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@fontsource/ibm-plex-sans": "5.3.0",
+    "astro": "7.4.2"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.12",
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.64.1",
+    "@types/node": "24.19.2",
+    "typescript": "6.0.2"
+  }
+}

@@ -1,0 +1,141 @@
+---
+import { statSync } from 'node:fs';
+import { join } from 'node:path';
+import { formatBytes, type ProjectDocument } from '../data/documents';
+
+interface Props {
+  document: ProjectDocument;
+  headingLevel?: 2 | 3;
+}
+
+const { document: doc, headingLevel = 2 } = Astro.props;
+const Heading = `h${headingLevel}` as 'h2' | 'h3';
+
+// Read the real file size at build time; the build fails if the PDF is missing.
+const size = formatBytes(statSync(join(process.cwd(), 'public', doc.file)).size);
+const fileName = doc.file.split('/').pop();
+---
+
+<article class="doc" aria-labelledby={`doc-${doc.id}`}>
+  {
+    doc.preview && (
+      <a class="preview" href={doc.htmlPage ?? doc.file} tabindex="-1" aria-hidden="true">
+        <img src={doc.preview} alt="" width="300" height="424" decoding="async" />
+      </a>
+    )
+  }
+  <div class="info">
+    <p class="term">{doc.term}</p>
+    <Heading id={`doc-${doc.id}`} class="title">{doc.title}</Heading>
+    <p class="summary">{doc.summary}</p>
+    <p class="meta">PDF, {doc.pages} {doc.pages === 1 ? 'page' : 'pages'}, {size}</p>
+    {doc.note && <p class="note">{doc.note}</p>}
+    <div class="actions">
+      {
+        doc.htmlPage && (
+          <a class="button button--primary" href={doc.htmlPage}>
+            Read online
+          </a>
+        )
+      }
+      <a class="button" href={doc.file} target="_blank" rel="noopener">
+        View PDF<span class="visually-hidden"> (opens in a new tab)</span>
+      </a>
+      <a class="button" href={doc.file} download={fileName}>
+        Download PDF
+      </a>
+    </div>
+  </div>
+</article>
+
+<style>
+  .doc {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: linear-gradient(160deg, var(--navy-850), var(--navy-900) 60%);
+  }
+
+  .preview {
+    display: block;
+    width: 9.5rem;
+    align-self: start;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.08),
+      0 18px 30px -12px rgb(0 0 0 / 0.7);
+    transform: rotate(-1.5deg);
+    transition: transform 200ms ease;
+  }
+
+  .preview:hover {
+    transform: rotate(0deg) translateY(-2px);
+  }
+
+  .preview img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .term {
+    color: var(--violet);
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .title {
+    margin-top: 0.25rem;
+    font-size: var(--step-2);
+  }
+
+  .summary {
+    margin-top: var(--space-1);
+    color: var(--text-muted);
+    max-width: 60ch;
+  }
+
+  .meta {
+    margin-top: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+  }
+
+  .note {
+    margin-top: 0.4rem;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    max-width: 60ch;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: var(--space-3);
+  }
+
+  @media (min-width: 40rem) {
+    .doc {
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: var(--space-4);
+      padding: var(--space-4);
+    }
+  }
+
+  @media (max-width: 39.99rem) {
+    .preview {
+      width: 7.5rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .preview {
+      transition: none;
+    }
+  }
+</style>

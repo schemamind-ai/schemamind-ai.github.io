@@ -1,0 +1,279 @@
+---
+// Hero illustration of the research question: a model learns a schema, then a
+// column is renamed. This is an illustrative example, not model output.
+---
+
+<figure class="schema-figure" aria-labelledby="schema-figure-caption">
+  <div class="question">
+    <span class="caption-label">Question</span>
+    <p>Which customers placed an order in 2026?</p>
+  </div>
+
+  <div class="tables">
+    <div class="table">
+      <p class="table-name"><code>customers</code></p>
+      <ul>
+        <li><code>id</code><span class="key">PK</span></li>
+        <li class="renamed">
+          <code class="old">name</code>
+          <code class="new">full_name</code>
+          <span class="visually-hidden">(column renamed from name to full_name)</span>
+        </li>
+        <li><code>city</code></li>
+      </ul>
+    </div>
+
+    <svg class="link" viewBox="0 0 48 140" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 58 H24 V91 H48" fill="none" stroke="var(--text-muted)" stroke-width="1.5" vector-effect="non-scaling-stroke"></path>
+      <circle cx="0" cy="58" r="3" fill="var(--text-muted)"></circle>
+      <circle cx="48" cy="91" r="3" fill="var(--text-muted)"></circle>
+    </svg>
+
+    <div class="table table--violet">
+      <p class="table-name"><code>orders</code></p>
+      <ul>
+        <li><code>id</code><span class="key">PK</span></li>
+        <li><code>customer_id</code><span class="key">FK</span></li>
+        <li><code>placed_at</code></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sql">
+    <span class="caption-label">SQL from a model trained before the change</span>
+    <pre><code>SELECT DISTINCT c.<mark>name</mark>
+FROM customers c
+JOIN orders o ON o.customer_id = c.id
+WHERE o.placed_at &gt;= '2026-01-01';</code></pre>
+    <p class="warning">The column <code>name</code> no longer exists. Will the model notice?</p>
+  </div>
+
+  <figcaption id="schema-figure-caption">
+    Illustrative example of the schema-change question. It is not output from a trained model.
+  </figcaption>
+</figure>
+
+<style>
+  .schema-figure {
+    --row: 32px;
+    --head: 40px;
+    --delay: 1.6s;
+    position: relative;
+    margin: 0;
+    padding: var(--space-3);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background:
+      linear-gradient(180deg, rgb(26 36 67 / 0.65), rgb(15 23 45 / 0.85)),
+      var(--navy-900);
+    box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.6);
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .schema-figure::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgb(111 168 255 / 0.55), transparent 40%, transparent 60%, rgb(168 139 250 / 0.55));
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .caption-label {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    font-weight: 500;
+  }
+
+  .question p {
+    font-family: var(--font-serif);
+    font-size: 1.1875rem;
+    line-height: 1.35;
+  }
+
+  .tables {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .table {
+    border: 1px solid rgb(111 168 255 / 0.5);
+    border-radius: var(--radius-small);
+    background: var(--navy-950);
+    overflow: hidden;
+  }
+
+  .table--violet {
+    border-color: rgb(168 139 250 / 0.5);
+  }
+
+  .table-name {
+    height: var(--head);
+    display: flex;
+    align-items: center;
+    padding-inline: 0.75rem;
+    background: var(--blue-soft);
+    border-bottom: 1px solid rgb(111 168 255 / 0.35);
+    font-weight: 500;
+  }
+
+  .table--violet .table-name {
+    background: var(--violet-soft);
+    border-bottom-color: rgb(168 139 250 / 0.35);
+  }
+
+  .table ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .table li {
+    height: var(--row);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-inline: 0.75rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.875rem;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .table li:first-child {
+    border-top: 0;
+  }
+
+  .table code {
+    font-size: 0.875rem;
+  }
+
+  .key {
+    margin-left: auto;
+    color: var(--text-muted);
+    font: 500 0.6875rem var(--font-mono);
+  }
+
+  .link {
+    width: 48px;
+    height: calc(var(--head) + 3 * var(--row) + 4px);
+  }
+
+  /* The rename: shown as the final state, revealed once on load. */
+  .renamed {
+    background: var(--amber-soft);
+    box-shadow: inset 2px 0 0 var(--amber);
+    animation: highlight 600ms ease-out var(--delay) both;
+  }
+
+  .renamed .old {
+    color: var(--text-muted);
+    text-decoration: line-through;
+    text-decoration-color: var(--amber);
+    animation: strike 500ms ease-out var(--delay) both;
+  }
+
+  .renamed .new {
+    color: var(--amber);
+    animation: appear 500ms ease-out calc(var(--delay) + 250ms) both;
+  }
+
+  .sql pre {
+    margin: 0;
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-small);
+    background: var(--navy-950);
+    border: 1px solid var(--rule);
+    overflow-x: auto;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+  }
+
+  .sql mark {
+    color: inherit;
+    background: none;
+    text-decoration: underline wavy var(--amber);
+    text-underline-offset: 3px;
+    animation: appear-underline 500ms ease-out calc(var(--delay) + 500ms) both;
+  }
+
+  .warning {
+    margin-top: 0.6rem;
+    color: var(--amber);
+    font-size: 0.875rem;
+    animation: appear 500ms ease-out calc(var(--delay) + 700ms) both;
+  }
+
+  figcaption {
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--rule);
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+  }
+
+  @keyframes highlight {
+    from {
+      background: transparent;
+      box-shadow: inset 0 0 0 transparent;
+    }
+  }
+
+  @keyframes strike {
+    from {
+      color: var(--text);
+      text-decoration-color: transparent;
+    }
+  }
+
+  @keyframes appear {
+    from {
+      opacity: 0;
+      transform: translateY(3px);
+    }
+  }
+
+  @keyframes appear-underline {
+    from {
+      text-decoration-color: transparent;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .schema-figure * {
+      animation: none !important;
+    }
+  }
+
+  @media (max-width: 26rem) {
+    .schema-figure {
+      padding: var(--space-2);
+    }
+
+    .tables {
+      grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr);
+    }
+
+    .link {
+      width: 28px;
+    }
+
+    .table li,
+    .table-name {
+      padding-inline: 0.5rem;
+    }
+
+    .table code {
+      font-size: 0.8125rem;
+    }
+  }
+</style>
