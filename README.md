@@ -26,6 +26,8 @@ Run all of these before pushing. The deployment workflow runs the same checks an
 npm run check               # TypeScript and Astro type check
 npm run build               # production build into dist/
 npm run verify              # privacy, claims and internal-link scan of dist/
+python3 -m pip install pypdf      # first time only
+python3 scripts/check-pdfs.py dist   # checks published PDFs for ID numbers and e-mail addresses
 npx playwright install chromium   # first time only
 npm test                    # end-to-end tests (desktop, tablet, mobile)
 ```
@@ -53,6 +55,7 @@ public/
 scripts/
   build-assets.mjs   regenerates the proposal PDF, preview, social image and icons
   verify-dist.mjs    checks the build for private data and unsupported claims
+  check-pdfs.py      checks published PDFs for private data
   serve-dist.mjs     static server used by the tests
 tests/           Playwright tests
 ```
