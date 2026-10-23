@@ -41,10 +41,11 @@
 
   <div class="sql">
     <span class="caption-label">SQL from a model trained before the change</span>
-    <pre><code>SELECT DISTINCT c.<mark>name</mark>
+    <pre><code>SELECT DISTINCT c.id, c.<mark>name</mark>
 FROM customers c
 JOIN orders o ON o.customer_id = c.id
-WHERE o.placed_at &gt;= '2026-01-01';</code></pre>
+WHERE o.placed_at &gt;= '2026-01-01'
+  AND o.placed_at &lt; '2027-01-01';</code></pre>
     <p class="warning">The column <code>name</code> no longer exists. Will the model notice?</p>
   </div>
 

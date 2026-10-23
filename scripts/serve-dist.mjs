@@ -5,8 +5,9 @@
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const dist = new URL('../dist/', import.meta.url).pathname;
+const dist = fileURLToPath(new URL('../dist/', import.meta.url));
 const port = Number(process.argv[2] ?? 4321);
 
 const types = {
@@ -23,7 +24,13 @@ const types = {
 };
 
 function resolveFile(pathname) {
-  const safe = normalize(decodeURIComponent(pathname)).replace(/^(\.\.[/\\])+/, '');
+  let decoded;
+  try {
+    decoded = decodeURIComponent(pathname);
+  } catch {
+    return null;
+  }
+  const safe = normalize(decoded).replace(/^(\.\.[/\\])+/, '');
   let file = join(dist, safe);
   if (!file.startsWith(dist)) return null;
   if (existsSync(file) && statSync(file).isDirectory()) file = join(file, 'index.html');
@@ -37,7 +44,9 @@ createServer((req, res) => {
   const body = file ?? join(dist, '404.html');
   res.writeHead(status, { 'Content-Type': types[extname(body)] ?? 'application/octet-stream' });
   if (req.method === 'HEAD') return res.end();
-  createReadStream(body).pipe(res);
+  createReadStream(body)
+    .on('error', () => res.end())
+    .pipe(res);
 }).listen(port, '127.0.0.1', () => {
   console.log(`Serving dist/ at http://localhost:${port}`);
 });

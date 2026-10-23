@@ -12,7 +12,7 @@ const { document: doc, headingLevel = 2 } = Astro.props;
 const Heading = `h${headingLevel}` as 'h2' | 'h3';
 
 // Read the real file size at build time; the build fails if the PDF is missing.
-const size = formatBytes(statSync(join(process.cwd(), 'public', doc.file)).size);
+const size = formatBytes(statSync(join(__PUBLIC_DIR__, doc.file)).size);
 const fileName = doc.file.split('/').pop();
 ---
 

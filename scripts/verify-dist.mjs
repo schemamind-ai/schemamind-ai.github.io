@@ -3,16 +3,19 @@
 //     local file paths, references to private project files);
 //   - no claims of results the project does not have yet;
 //   - every internal link and asset reference points to an existing file.
+// PDFs are checked separately by scripts/check-pdfs.py (needs Python and pypdf).
 // Usage: npm run build && npm run verify
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const dist = new URL('../dist/', import.meta.url).pathname;
+const dist = fileURLToPath(new URL('../dist/', import.meta.url));
 const textTypes = new Set(['.html', '.xml', '.txt', '.js', '.css', '.svg', '.json', '.webmanifest']);
 
 const privacyRules = [
-  { name: 'digit run of 9 or more (possible ID number)', pattern: /(?<![\w.#-])\d{9,}(?![\w.-])/ },
+  // Any run of 9+ digits, except the fractional part of a decimal number.
+  { name: 'digit run of 9 or more (possible ID number)', pattern: /(?<!\d\.\d*)\d{9,}/ },
   { name: 'e-mail address', pattern: /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i },
   { name: 'local file path', pattern: /\/Users\/|\/home\/[a-z]|[A-Z]:\\\\/ },
   { name: 'private project file', pattern: /Arastirma|\.docx|research-plan|claude\.ai\/artifact/i },
@@ -56,7 +59,9 @@ for (const file of files) {
   }
 
   if (extname(file) === '.html') {
-    const text = content
+    // Meta descriptions and social-preview text are public too, so check them as well.
+    const metaText = [...content.matchAll(/<meta[^>]+content="([^"]*)"/g)].map((m) => m[1]).join(' ');
+    const text = metaText + ' ' + content
       .replace(/<script[\s\S]*?<\/script>/g, ' ')
       .replace(/<style[\s\S]*?<\/style>/g, ' ')
       .replace(/<[^>]+>/g, ' ');

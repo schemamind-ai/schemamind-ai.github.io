@@ -63,8 +63,13 @@ function universityLogoDataUrl() {
     console.warn('Original proposal not found; the PDF will be rendered without the logo.');
     return null;
   }
-  const jpeg = execFileSync('unzip', ['-p', originalProposal, 'word/media/image1.jpeg']);
-  return `data:image/jpeg;base64,${jpeg.toString('base64')}`;
+  try {
+    const jpeg = execFileSync('unzip', ['-p', originalProposal, 'word/media/image1.jpeg'], { stdio: ['ignore', 'pipe', 'ignore'] });
+    return `data:image/jpeg;base64,${jpeg.toString('base64')}`;
+  } catch {
+    console.warn('Logo not found in the original proposal; the PDF will be rendered without it.');
+    return null;
+  }
 }
 
 function proposalHtml(logo) {
@@ -143,8 +148,9 @@ const ogHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><styl
 const browser = await chromium.launch();
 try {
   // Proposal PDF and its preview image.
+  const html = proposalHtml(universityLogoDataUrl());
   const page = await browser.newPage();
-  await page.setContent(proposalHtml(universityLogoDataUrl()), { waitUntil: 'load' });
+  await page.setContent(html, { waitUntil: 'load' });
   await page.pdf({
     path: out('documents/schemamind-ai-project-proposal.pdf'),
     format: 'A4',
@@ -156,7 +162,7 @@ try {
 
   const preview = await browser.newPage({ viewport: { width: 794, height: 1123 }, deviceScaleFactor: 300 / 794 });
   await preview.setContent(
-    proposalHtml(universityLogoDataUrl()).replace(
+    html.replace(
       '<style>',
       '<style>body { padding: 94px 94px 0; box-sizing: border-box; height: 1123px; overflow: hidden; background: #fff; }',
     ),

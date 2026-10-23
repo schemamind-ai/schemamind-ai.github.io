@@ -10,10 +10,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: pages
-  cancel-in-progress: false
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -36,6 +32,11 @@ jobs:
 
       - name: Verify build (privacy, claims, links)
         run: npm run verify
+
+      - name: Check published PDFs for private data
+        run: |
+          python3 -m pip install --quiet pypdf==6.21.1
+          python3 scripts/check-pdfs.py dist
 
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
@@ -61,6 +62,10 @@ jobs:
     if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
+    # Only deployments share this group, so pull-request runs never cancel a pending deploy.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     permissions:
       pages: write
       id-token: write
