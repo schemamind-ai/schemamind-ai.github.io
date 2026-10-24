@@ -20,7 +20,7 @@ npm run dev                 # development server at http://localhost:4321
 
 ## Checks
 
-Run all of these before pushing. The deployment workflow runs the same checks and will not publish if any fail.
+Run all of these before publishing. Once enabled, the deployment workflow runs the same checks and will not publish if any fail.
 
 ```sh
 npm run check               # TypeScript and Astro type check
@@ -58,6 +58,7 @@ scripts/
   check-pdfs.py      checks published PDFs for private data
   serve-dist.mjs     static server used by the tests
 tests/           Playwright tests
+deploy/          GitHub Actions workflow, ready to move to .github/workflows/
 ```
 
 ## Updating the website
@@ -90,7 +91,33 @@ When experiments are complete, replace the "Results" placeholder in the Evaluati
 
 ## Deployment
 
-`.github/workflows/deploy.yml` builds, verifies and tests the site, then deploys `dist/` to GitHub Pages. Repository settings: **Settings → Pages → Source: GitHub Actions**. To roll back, revert the commit on `main`; the previous version is redeployed automatically.
+### Current mode: deploy from the `gh-pages` branch
+
+The site is currently published from the `gh-pages` branch, which contains only the built `dist/` output (plus an empty `.nojekyll` file). Repository settings: **Settings → Pages → Source: Deploy from a branch → `gh-pages` / root**.
+
+To publish a change, run the checks above, push `main`, then publish the build:
+
+```sh
+npm run build && npm run verify && python3 scripts/check-pdfs.py dist && npm test
+git worktree add ../gh-pages-publish gh-pages
+rsync -a --delete --exclude .git dist/ ../gh-pages-publish/
+touch ../gh-pages-publish/.nojekyll
+git -C ../gh-pages-publish add -A
+git -C ../gh-pages-publish commit -m "Publish site"
+git -C ../gh-pages-publish push origin gh-pages
+git worktree remove ../gh-pages-publish
+```
+
+GitHub Pages updates within a few minutes.
+
+### Enabling automatic deployment (recommended)
+
+`deploy/github-pages-workflow.yml` is a ready GitHub Actions workflow that type-checks, builds, verifies and tests the site, then deploys it on every push to `main`. It is stored outside `.github/workflows/` because pushing workflow files requires the `workflow` permission on the publishing account. To enable it, an organization owner:
+
+1. Opens <https://github.com/schemamind-ai/schemamind-ai.github.io/new/main?filename=.github/workflows/deploy.yml>, pastes the contents of `deploy/github-pages-workflow.yml`, and commits it to `main`.
+2. Sets **Settings → Pages → Source** to **GitHub Actions**.
+
+From then on every push to `main` is tested and deployed automatically, and the `gh-pages` branch is no longer needed. To roll back, revert the commit on `main`.
 
 ## Team
 
