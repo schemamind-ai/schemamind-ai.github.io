@@ -87,7 +87,7 @@ When experiments are complete, replace the "Results" placeholder in the Evaluati
 
 ### Regenerate the public proposal PDF
 
-`npm run assets` rebuilds `public/documents/schemamind-ai-project-proposal.pdf`, its preview image, the social preview image and the icons. The proposal text comes from `src/data/`, which contains no student numbers. The script reads the university logo from the original proposal one folder above this repository (`../Senior Project Proposal.docx`) if that file is present; the original is never modified or copied into the repository.
+`npm run assets` rebuilds `public/documents/schemamind-ai-project-proposal.pdf`, its preview image, the social preview image and the icons. The proposal text comes from `src/data/`, which contains no student numbers. The script reads the university logo from the original proposal one folder above this repository (`../Senior Project Proposal*.docx`) if that file is present; the original is never modified or copied into the repository.
 
 ## Deployment
 

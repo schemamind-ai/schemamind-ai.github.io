@@ -10,7 +10,7 @@
 // is present; the original file is only read, never modified or copied.
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
@@ -23,7 +23,12 @@ const out = (path) => join(root, 'public', path);
 // Fonts are inlined as data URLs: pages opened with setContent cannot load file:// URLs.
 const fontFile = (pkg, file) =>
   `data:font/woff2;base64,${readFileSync(join(root, 'node_modules', pkg, 'files', file)).toString('base64')}`;
-const originalProposal = resolve(root, '..', 'Senior Project Proposal.docx');
+// The original proposal lives one folder up; its file name may carry a suffix
+// (e.g. team names), so match it by prefix and skip Word lock files.
+const proposalName = readdirSync(resolve(root, '..')).find(
+  (name) => name.startsWith('Senior Project Proposal') && name.endsWith('.docx'),
+);
+const originalProposal = proposalName ? resolve(root, '..', proposalName) : '';
 
 const escape = (text) =>
   String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -59,7 +64,7 @@ const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" 
 `;
 
 function universityLogoDataUrl() {
-  if (!existsSync(originalProposal)) {
+  if (!originalProposal || !existsSync(originalProposal)) {
     console.warn('Original proposal not found; the PDF will be rendered without the logo.');
     return null;
   }
